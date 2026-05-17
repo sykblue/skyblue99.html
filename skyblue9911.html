@@ -1,92 +1,263 @@
-<!DOCTYPE HTML>
-<HTML>
-	<HEAD></HEAD>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRACK 스타일 AI 캐릭터 챗</title>
+  <style>
+    :root {
+      --bg: #f6f6f4;
+      --surface: #ffffff;
+      --surface-2: #f1f1ed;
+      --text: #1a1918;
+      --muted: #7b7973;
+      --accent: #ff4b37;
+      --border: #e8e7e2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, "Noto Sans KR", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+    .sidebar, .main {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .sidebar { padding: 14px; }
+    .logo { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    .logo span { color: var(--accent); }
+    .menu { display: flex; gap: 8px; margin: 16px 0; }
+    .pill {
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pill.active { background: #ffe3df; color: #af2f1f; }
+    .card-list { display: grid; gap: 10px; }
+    .character {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      background: #fff;
+    }
+    .character.active { border-color: var(--accent); background: #fff7f6; }
+    .character h4 { margin: 0 0 4px; }
+    .character p { margin: 0; font-size: 13px; color: var(--muted); }
 
-<style>
-body{
-  background-color:#efe5a0;
-  font-family:arial,"trebuchet ms",sans-serif;\
-  margin:50px;
-
-}
-header{
-background-color:#e3afed;
- color:#000000;
- margin:0px;
- text-align:center;
- padding:5px;
-}
-h1{
-  margin:0px;
-}
-section#main{
-display:table-cell;
-background-color: yellow;
-padding: 15px;
-
-}
-nav{
-display:table-cell;
-background-color:magenta;
-padding: 15px;
-
-}
-footer{
-display:table-cell;
-background-color: pink;
-padding: 15px;
-
-}
-
-</style>
+    .main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+    .topbar {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar h2 { margin: 0; font-size: 18px; }
+    .sub { font-size: 13px; color: var(--muted); }
+    .config {
+      display: flex; gap: 8px; align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="password"], input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-width: 220px;
+    }
+    .btn {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .chat {
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .msg {
+      max-width: min(80%, 720px);
+      padding: 12px 14px;
+      border-radius: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .msg.bot { background: #f7f7f5; border: 1px solid var(--border); }
+    .msg.user { margin-left: auto; background: #ffe7e3; border: 1px solid #ffd1ca; }
+    .composer {
+      border-top: 1px solid var(--border);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    .composer input { min-width: 0; }
+    .footnote {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0 12px 12px;
+    }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
 <body>
-  <header>
-    <h1>page 1</h1>
-    </header>
-    <nav>
-<h1>link</h1>
-<ul>
-	<li> <button><a href="https://fans.jype.com/">버튼</a></button></li>
-  <li> <button><a href="http://www.google.co.kr">버튼</a></button></li>
-</ul>
-<figure>
-  <img src=".jpg" width="100" height="100" />
-  <figcaption>트와이스</figcaption>
-</figure>
-</nav>
-<section id="main" >
-<h1>semantic</h1>
-<article>
-<p>시멘틱 태그는 브라우저에게 요소의 의미와 목적을 알려줌</p>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">CR<span>ACK</span> Clone</div>
+      <div class="menu">
+        <button class="pill active">스토리</button>
+        <button class="pill">캐릭터</button>
+      </div>
+      <div class="card-list" id="characterList"></div>
+    </aside>
 
-</article>
-<h1>div와 span</h1>
-<article><p>div는 divde의 약자로서 페이지를 논리적인 섹션으로 분리하는데 사용하는 태그이다</p></article>
-<article><p>  (article) 태그는 해당 문서나 페이지 또는 사이트와는 완전히 독립적으로 구성할 수 있는 요소를 정의할 때 사용합니다.
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="characterName">사건번호 2024가단X</h2>
+          <div class="sub" id="characterDesc">민트초코 논쟁 법정 토론을 진행하는 AI 캐릭터</div>
+        </div>
+        <div class="config">
+          <input id="apiKey" type="password" placeholder="Gemini API Key" />
+          <button class="btn" id="saveKey">키 저장</button>
+        </div>
+      </div>
 
- 
+      <section class="chat" id="chat"></section>
 
-<article> 요소에 포함될 수 있는 내용은 다음과 같습니다.
+      <form class="composer" id="chatForm">
+        <input id="prompt" type="text" placeholder="메시지를 입력하세요..." required />
+        <button class="btn" type="submit">전송</button>
+      </form>
+      <div class="footnote">* 프론트엔드 데모입니다. 실제 서비스처럼 보이도록 구성했으며 Gemini API만 연결됩니다.</div>
+    </main>
+  </div>
 
-- 포럼(forum) 포스트
+  <script>
+    const characters = [
+      { name: '사건번호 2024가단X', desc: '민트초코 논쟁 법정 토론 진행', prompt: '너는 재치 있는 법정 토론 진행자다.' },
+      { name: '밀레니엄', desc: '고대 문명 생존 시뮬레이션', prompt: '너는 기원전 문명 조언가다.' },
+      { name: '스페이스 오디세이', desc: '우주선 위기 상황 롤플레잉', prompt: '너는 냉철한 우주 항해 AI다.' }
+    ];
 
-- 블로그 포스트
+    const chatEl = document.getElementById('chat');
+    const listEl = document.getElementById('characterList');
+    const nameEl = document.getElementById('characterName');
+    const descEl = document.getElementById('characterDesc');
+    const apiKeyInput = document.getElementById('apiKey');
+    const saveBtn = document.getElementById('saveKey');
+    const form = document.getElementById('chatForm');
+    const promptInput = document.getElementById('prompt');
 
-- 보도 기사
+    let selected = 0;
+    let history = [];
 
-- 논평(comment) 등
-	</article>
-(article) 코드 예시
-	<article>
-    <h2>2월 19일 날씨 정보</h2>
-    <h3>서울</h3>
-    <p>맑음</p>
-    <h3>대전</h3>
-    <p>흐림</p>
-    <h3>부산</h3>
-    <p>비</p>
-</article>
-</section>
-<footer>copyright</footer>
+    function renderCharacters() {
+      listEl.innerHTML = '';
+      characters.forEach((c, i) => {
+        const item = document.createElement('button');
+        item.className = `character ${selected === i ? 'active' : ''}`;
+        item.innerHTML = `<h4>${c.name}</h4><p>${c.desc}</p>`;
+        item.onclick = () => {
+          selected = i;
+          history = [];
+          nameEl.textContent = c.name;
+          descEl.textContent = c.desc;
+          chatEl.innerHTML = '';
+          addMsg('bot', `${c.name}에 오신 걸 환영합니다. 역할극을 시작해볼까요?`);
+          renderCharacters();
+        };
+        listEl.appendChild(item);
+      });
+    }
 
+    function addMsg(role, text) {
+      const el = document.createElement('div');
+      el.className = `msg ${role}`;
+      el.textContent = text;
+      chatEl.appendChild(el);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    async function askGemini(userText) {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (!apiKey) throw new Error('Gemini API 키를 먼저 저장해주세요.');
+
+      const sys = characters[selected].prompt;
+      const contents = [
+        ...history,
+        { role: 'user', parts: [{ text: `${sys}\n\n유저: ${userText}` }] }
+      ];
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`API 오류: ${txt}`);
+      }
+
+      const data = await res.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 비어 있습니다.';
+    }
+
+    saveBtn.onclick = () => {
+      localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+      apiKeyInput.value = '';
+      alert('API 키가 저장되었습니다.');
+    };
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = promptInput.value.trim();
+      if (!text) return;
+      addMsg('user', text);
+      promptInput.value = '';
+
+      try {
+        const reply = await askGemini(text);
+        history.push({ role: 'user', parts: [{ text }] });
+        history.push({ role: 'model', parts: [{ text: reply }] });
+        addMsg('bot', reply);
+      } catch (err) {
+        addMsg('bot', `⚠️ ${err.message}`);
+      }
+    };
+
+    renderCharacters();
+    addMsg('bot', '크랙 스타일 클론 데모입니다. 오른쪽 위에 Gemini API Key를 넣고 대화를 시작하세요.');
+  </script>
 </body>
+</html>
