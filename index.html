@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crack.io 기반 Gemini 챗봇</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141b34;
+      --soft: #20294b;
+      --text: #e9ecff;
+      --muted: #aeb7e6;
+      --accent: #6ea8fe;
+      --danger: #ff7a7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: radial-gradient(circle at top, #1a2450, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.2);
+    }
+    h1 { margin: 0 0 6px; font-size: 1.4rem; }
+    p { margin: 0; color: var(--muted); }
+    .controls {
+      display: grid;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .row {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: var(--soft);
+      color: var(--text);
+      padding: 10px 12px;
+    }
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      width: 100%;
+    }
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #7ab0ff, #5d95f5);
+      color: #0a1335;
+      border: none;
+      font-weight: 700;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    #chat {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      min-height: 350px;
+      max-height: 56vh;
+      overflow: auto;
+      background: #0f1530;
+    }
+    .msg {
+      padding: 12px 14px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+    .user { background: #24356f; margin-left: 10%; }
+    .bot { background: #1a244a; margin-right: 10%; }
+    .system { background: #452a2a; color: #ffd3d3; border: 1px solid #7a3f3f; }
+    .help {
+      padding: 12px 20px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .help b { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>Crack.io 기반 Gemini 챗봇 메인 페이지</h1>
+        <p>브라우저에서 바로 Gemini API 호출이 가능한 데모 UI입니다.</p>
+      </header>
+
+      <div class="controls">
+        <label>
+          Gemini API Key
+          <input id="apiKey" type="password" placeholder="AIza..." autocomplete="off" />
+        </label>
+        <div class="row">
+          <label>
+            모델
+            <select id="model">
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+            </select>
+          </label>
+          <button id="sendBtn">전송</button>
+        </div>
+        <label>
+          메시지
+          <textarea id="prompt" placeholder="질문을 입력하세요..."></textarea>
+        </label>
+      </div>
+
+      <div id="chat" aria-live="polite"></div>
+      <div class="help">
+        <p><b>보안 주의:</b> 프론트엔드에서 직접 API 키를 사용하면 키 노출 위험이 있습니다. 운영 환경에서는 백엔드 프록시를 통해 호출하세요.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const sendBtn = document.getElementById('sendBtn');
+    const promptEl = document.getElementById('prompt');
+
+    function addMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = `msg ${role}`;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const model = document.getElementById('model').value;
+      const prompt = promptEl.value.trim();
+
+      if (!apiKey) {
+        addMessage('system', 'API 키를 입력해주세요.');
+        return;
+      }
+      if (!prompt) {
+        addMessage('system', '메시지를 입력해주세요.');
+        return;
+      }
+
+      sendBtn.disabled = true;
+      addMessage('user', prompt);
+      promptEl.value = '';
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }]
+          })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`요청 실패 (${res.status}): ${errText}`);
+        }
+
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text).join('')
+          || '응답을 파싱하지 못했습니다.';
+        addMessage('bot', text);
+      } catch (err) {
+        addMessage('system', `오류: ${err.message}`);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        sendMessage();
+      }
+    });
+
+    addMessage('system', '시작하려면 API 키와 메시지를 입력한 뒤 전송을 누르세요. (Ctrl/Cmd+Enter 지원)');
+  </script>
+</body>
+</html>
